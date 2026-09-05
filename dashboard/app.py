@@ -24,7 +24,7 @@ AUDIT_FILE = DATA_PATH / "audit_log.csv"
 
 sys.path.insert(0, str(SRC_PATH))
 
-from risk_engine import analyze_transaction
+
 from fraud_spike import detect_fraud_spike
 
 
@@ -384,7 +384,51 @@ st.write(
     "RazorGuard monitors recent transactions and detects "
     "unusual concentrations of risky transactions."
 )
+if st.button("🧪 Generate Fraud Spike Demo Data"):
 
+    demo_time = datetime.now()
+
+    demo_records = []
+
+    for i in range(10):
+
+        if i < 4:
+            risk_level = "HIGH"
+            risk_score = 90
+            fraud_probability = 0.90
+        else:
+            risk_level = "LOW"
+            risk_score = 20
+            fraud_probability = 0.20
+
+        demo_records.append({
+            "time": (
+                demo_time - pd.Timedelta(minutes=i * 5)
+            ).strftime("%Y-%m-%d %H:%M:%S"),
+            "transaction_id": f"SPIKE-DEMO-{i+1:03d}",
+            "amount": 1000 + (i * 100),
+            "risk_score": risk_score,
+            "risk_level": risk_level,
+            "fraud_probability": fraud_probability
+        })
+
+    demo_df = pd.DataFrame(demo_records)
+
+    history_df = pd.concat(
+        [history_df, demo_df],
+        ignore_index=True
+    )
+
+    history_df.to_csv(
+        AUDIT_FILE,
+        index=False
+    )
+
+    st.success(
+        "✅ Fraud-spike demo data added successfully: "
+        "4 HIGH-risk + 6 LOW-risk transactions."
+    )
+    st.rerun()
 spike_result = detect_fraud_spike(
     history_df,
     window_minutes=60,
